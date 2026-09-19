@@ -27,7 +27,9 @@ export class FeedbackService {
     if(!await this.storage.personalizationEnabled(userId))return finish('personalization_disabled');
     const spans=changedSpans(d.outputText,input.final_text);
     if(!spans || spans.length>80)return finish('edit_too_large_for_safe_learning');
-    const analysis=feedbackOutput.parse(await this.llm.generateJson({system:FEEDBACK_SYSTEM_PROMPT,user:JSON.stringify({raw:d.rawTranscript,generated:d.outputText,final:input.final_text,context:{type:d.context?.type??'ai_prompt'},spans:spans.map((s,i)=>({...s,span_index:i}))}),schemaName:'sayit_feedback',schema:feedbackSchema,signal}));
+    const parsed=feedbackOutput.safeParse(await this.llm.generateJson({system:FEEDBACK_SYSTEM_PROMPT,user:JSON.stringify({raw:d.rawTranscript,generated:d.outputText,final:input.final_text,context:{type:d.context?.type??'ai_prompt'},spans:spans.map((s,i)=>({...s,span_index:i}))}),schemaName:'sayit_feedback',schema:feedbackSchema,signal}));
+    if(!parsed.success)throw new ServiceError(502,'invalid_feedback_response');
+    const analysis=parsed.data;
     if(analysis.items.length!==spans.length||new Set(analysis.items.map(x=>x.span_index)).size!==spans.length||analysis.items.some(x=>x.span_index>=spans.length))throw new ServiceError(502,'invalid_feedback_alignment');
     const previous=await this.storage.listRecentCorrections(userId,500),scope=d.context?.projectId??'';
     const existingVocabulary=await this.storage.listVocabulary(userId);
@@ -40,7 +42,6 @@ export class FeedbackService {
       const activate=isEligible&&(confirmed||normalizedSpelling(before)===normalizedSpelling(after)||priorPair);
       const record:CorrectionRecord={id:randomUUID(),userId,dictationId,scope,before:span.before,after:span.after,type:confirmed?'TERM_CORRECTION':item.type,confidence:confirmed?1:item.confidence,learn:false,reason:item.reason,createdAt:receipt.createdAt};
       if(isEligible && (existingVocabulary.length<1000||existingVocabulary.some(v=>v.canonical===after&&v.scope===scope))){
-        // Do not activate every proposed alias when one alias is confirmed: candidates keep no aliases.
         const entry=await this.storage.upsertVocabulary({userId,canonical:after,aliases:activate?[before]:[],scope,source:'auto',confidence:record.confidence,activate});
         if(entry.status==='active'&&activate){record.learn=true;receipt.learnedVocabulary.push(entry.canonical);}
         else if(entry.status==='candidate')receipt.candidateVocabulary.push(entry.canonical);
@@ -50,16 +51,17 @@ export class FeedbackService {
     await this.storage.addCorrections(receipt.corrections);
     const styleCandidate=analysis.items.length>0&&analysis.items.every(x=>PRESENTATION.has(x.type)&&x.confidence>=0.95)&&Object.values(analysis.style).some(x=>x!==null);
     if(styleCandidate){
-      // Independent equivalence gate: misclassified factual edits must not teach a style.
       try{
         const audit=guardOutput.parse(await this.llm.generateJson({system:GUARD_SYSTEM_PROMPT,user:JSON.stringify({raw:d.outputText,rewritten:input.final_text,vocabulary:[]}),schemaName:'sayit_feedback_guard',schema:guardSchema,signal}));
         if(audit.safe&&!audit.answered_user&&!audit.added_facts&&!audit.dropped_essential_meaning&&!audit.modal_strengthened&&!audit.negation_changed&&!audit.numbers_changed){
           const profile=await this.storage.getStyleProfile(userId,styleScope(d.context))??defaultStyleProfile(userId,styleScope(d.context));
           await this.storage.saveStyleProfile(mergeStyleSignals(profile,analysis.style));
         }
-      }catch{/* Feedback remains usable; an unavailable style auditor contributes no signal. */}
+      }catch{/* An unavailable style auditor contributes no signal. */}
     }
     receipt.learnedVocabulary=[...new Set(receipt.learnedVocabulary)];receipt.candidateVocabulary=[...new Set(receipt.candidateVocabulary)];
+    // "learned" means the analysis transaction completed. The arrays and learn
+    // flags identify actual activated rules; an empty array is not a new term.
     receipt.status='learned';return finish();
   }
 }

@@ -21,16 +21,24 @@ export class PostgresStorage implements Storage {
   }
   async createDictation(d:DictationRecord){await this.q(`INSERT INTO dictations (id,user_id,raw_transcript,output_text,output_hash,request_key,request_hash,language,duration,context,applied_terms,transformations,guard_status,meta,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb,$12::jsonb,$13,$14::jsonb,$15,$16)`,[d.id,d.userId,d.rawTranscript,d.outputText,d.outputHash,d.requestKey??null,d.requestHash??null,d.language??null,d.duration??null,JSON.stringify(d.context??null),JSON.stringify(d.appliedTerms),JSON.stringify(d.transformations),d.guardStatus,JSON.stringify(d.meta),d.createdAt,d.updatedAt]);}
   async getDictation(user:string,id:string){const r=await this.q("SELECT * FROM dictations WHERE user_id=$1 AND id=$2 AND created_at>now()-($3 * interval '1 hour')",[user,id,this.retentionHours]);return r.rows[0]?dictation(r.rows[0]):null;}
-  async findRequest(user:string,key:string){const r=await this.q("SELECT * FROM dictations WHERE user_id=$1 AND request_key=$2 AND created_at>now()-($3 * interval '1 hour')",[user,key,this.retentionHours]);return r.rows[0]?dictation(r.rows[0]):null;}
+  async findRequest(user:string,key:string){
+    // An expired row must not keep its unique key alive until the hourly purge.
+    // This method is used inside the caller's per-user write transaction.
+    await this.q("DELETE FROM dictations WHERE user_id=$1 AND request_key=$2 AND created_at<=now()-($3 * interval '1 hour')",[user,key,this.retentionHours]);
+    const r=await this.q('SELECT * FROM dictations WHERE user_id=$1 AND request_key=$2',[user,key]);return r.rows[0]?dictation(r.rows[0]):null;
+  }
   async setFeedback(user:string,id:string,receipt:FeedbackReceipt){await this.q('UPDATE dictations SET feedback=$3::jsonb,updated_at=now() WHERE user_id=$1 AND id=$2',[user,id,JSON.stringify(receipt)]);}
   async deleteDictation(user:string,id:string){const r=await this.q('DELETE FROM dictations WHERE user_id=$1 AND id=$2',[user,id]);return !!r.rowCount;}
   async listVocabulary(user:string){const r=await this.q('SELECT * FROM vocabulary WHERE user_id=$1 ORDER BY frequency DESC,updated_at DESC LIMIT 2000',[user]);return r.rows.map(vocabulary);}
   async upsertVocabulary(i:UpsertVocabulary){
     const r=await this.q(`INSERT INTO vocabulary (id,user_id,canonical,aliases,confidence,frequency,source,scope,status) VALUES ($1,$2,$3,$4::jsonb,$5,1,$6,$7,$8)
       ON CONFLICT (user_id,canonical,scope) DO UPDATE SET
-      aliases=CASE WHEN vocabulary.status='blocked' AND EXCLUDED.source='auto' THEN vocabulary.aliases ELSE COALESCE((SELECT jsonb_agg(value) FROM (SELECT DISTINCT value FROM jsonb_array_elements_text(vocabulary.aliases || EXCLUDED.aliases) AS value LIMIT 20) a),'[]'::jsonb) END,
-      frequency=vocabulary.frequency+CASE WHEN EXCLUDED.source='auto' THEN 1 ELSE 0 END,
-      confidence=GREATEST(vocabulary.confidence,EXCLUDED.confidence),
+      aliases=CASE
+        WHEN vocabulary.status='blocked' AND EXCLUDED.source='auto' THEN vocabulary.aliases
+        WHEN vocabulary.status='blocked' AND EXCLUDED.source='manual' THEN EXCLUDED.aliases
+        ELSE COALESCE((SELECT jsonb_agg(value) FROM (SELECT DISTINCT value FROM jsonb_array_elements_text(vocabulary.aliases || EXCLUDED.aliases) AS value LIMIT 20) a),'[]'::jsonb) END,
+      frequency=vocabulary.frequency+CASE WHEN EXCLUDED.source='auto' AND vocabulary.status<>'blocked' THEN 1 ELSE 0 END,
+      confidence=CASE WHEN vocabulary.status='blocked' AND EXCLUDED.source='auto' THEN vocabulary.confidence ELSE GREATEST(vocabulary.confidence,EXCLUDED.confidence) END,
       source=CASE WHEN EXCLUDED.source='manual' THEN 'manual' ELSE vocabulary.source END,
       status=CASE WHEN EXCLUDED.source='manual' THEN 'active' WHEN vocabulary.status='blocked' THEN 'blocked' WHEN EXCLUDED.status='active' THEN 'active' ELSE vocabulary.status END,updated_at=now() RETURNING *`,
       [randomUUID(),i.userId,i.canonical.trim(),JSON.stringify(i.aliases??[]),i.confidence??1,i.source,i.scope??'',i.source==='manual'||i.activate?'active':'candidate']);
@@ -49,6 +57,6 @@ export class PostgresStorage implements Storage {
   async resetPersonalization(user:string){await this.q('DELETE FROM corrections WHERE user_id=$1',[user]);await this.q('DELETE FROM vocabulary WHERE user_id=$1',[user]);await this.q('DELETE FROM style_profiles WHERE user_id=$1',[user]);}
   async deleteUserData(user:string){await this.resetPersonalization(user);await this.q('DELETE FROM dictations WHERE user_id=$1',[user]);await this.q('DELETE FROM personalization_settings WHERE user_id=$1',[user]);}
   async purgeExpired(){const r=await this.q("DELETE FROM dictations WHERE created_at<=now()-($1 * interval '1 hour')",[this.retentionHours]);return r.rowCount??0;}
-  async ping(){await this.q('SELECT 1');}
+  async ping(){await this.q('SELECT output_hash FROM dictations LIMIT 0');}
   async close(){if(!this.client)await this.pool.end();}
 }

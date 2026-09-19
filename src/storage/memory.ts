@@ -15,7 +15,10 @@ export class MemoryStorage implements Storage {
   private alive(d:DictationRecord):boolean{return Date.parse(d.createdAt)>Date.now()-this.retentionHours*3600000;}
   async createDictation(d:DictationRecord){this.data.dictations.set(d.id,structuredClone(d));}
   async getDictation(user:string,id:string){const d=this.data.dictations.get(id);return d?.userId===user&&this.alive(d)?structuredClone(d):null;}
-  async findRequest(user:string,key:string){const d=[...this.data.dictations.values()].find(x=>x.userId===user&&x.requestKey===key&&this.alive(x));return d?structuredClone(d):null;}
+  async findRequest(user:string,key:string){
+    for(const d of [...this.data.dictations.values()])if(d.userId===user&&d.requestKey===key&&!this.alive(d))await this.deleteDictation(user,d.id);
+    const d=[...this.data.dictations.values()].find(x=>x.userId===user&&x.requestKey===key);return d?structuredClone(d):null;
+  }
   async setFeedback(user:string,id:string,receipt:FeedbackReceipt){const d=this.data.dictations.get(id);if(d?.userId===user){d.feedback=structuredClone(receipt);d.updatedAt=new Date().toISOString();}}
   async deleteDictation(user:string,id:string){const d=this.data.dictations.get(id);if(d?.userId!==user)return false;this.data.dictations.delete(id);this.data.corrections=this.data.corrections.filter(c=>c.dictationId!==id);return true;}
   async listVocabulary(user:string){return structuredClone([...this.data.vocabulary.values()].filter(e=>e.userId===user));}
@@ -24,7 +27,9 @@ export class MemoryStorage implements Storage {
     const now=new Date().toISOString();
     const entry:VocabularyEntry=existing??{id:randomUUID(),userId:input.userId,canonical,scope,aliases:[],frequency:0,confidence:0,source:input.source,status:'candidate',createdAt:now,updatedAt:now};
     if(entry.status==='blocked'&&input.source==='auto')return structuredClone(entry);
-    entry.aliases=[...new Set([...entry.aliases,...(input.aliases??[])].map(a=>a.trim()).filter(Boolean))].slice(0,20);
+    // Explicitly restoring a removed term starts with the supplied aliases only.
+    const oldAliases=entry.status==='blocked'&&input.source==='manual'?[]:entry.aliases;
+    entry.aliases=[...new Set([...oldAliases,...(input.aliases??[])].map(a=>a.trim()).filter(Boolean))].slice(0,20);
     entry.frequency+=input.source==='auto'?1:entry.frequency===0?1:0;entry.confidence=Math.max(entry.confidence,input.confidence??1);
     if(input.source==='manual'){entry.source='manual';entry.status='active';}else if(input.activate){entry.status='active';}
     entry.updatedAt=now;this.data.vocabulary.set(entry.id,entry);return structuredClone(entry);
