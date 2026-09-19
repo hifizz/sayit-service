@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: sayit
+      POSTGRES_PASSWORD: sayit
+      POSTGRES_DB: sayit
+    ports:
+      - "5432:5432"
+    volumes:
+      - sayit_pg:/var/lib/postgresql/data
+
+  sayit:
+    build: .
+    depends_on:
+      - postgres
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://sayit:sayit@postgres:5432/sayit
+    ports:
+      - "8787:8787"
+
+volumes:
+  sayit_pg:
