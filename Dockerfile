@@ -1,16 +1,19 @@
-FROM node:22-alpine AS build
+FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
-COPY . .
+RUN npm install --no-audit --no-fund
+COPY tsconfig*.json ./
+COPY src ./src
 RUN npm run build
-
-FROM node:22-alpine
+FROM node:22-bookworm-slim
+ENV NODE_ENV=production HOST=0.0.0.0
 WORKDIR /app
-ENV NODE_ENV=production
-COPY package*.json ./
-RUN npm install --omit=dev
+COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/migrations ./migrations
+COPY package*.json ./
+COPY scripts/migrate.ts ./scripts/migrate.ts
+COPY migrations ./migrations
+USER node
 EXPOSE 8787
-CMD ["node", "dist/src/index.js"]
+HEALTHCHECK --interval=30s --timeout=5s CMD node -e "fetch('http://127.0.0.1:8787/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["sh","-c","npm run db:migrate && npm start"]

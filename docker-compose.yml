@@ -1,25 +1,26 @@
 services:
-  postgres:
-    image: postgres:17-alpine
+  db:
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: sayit
-      POSTGRES_PASSWORD: sayit
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: sayit
-    ports:
-      - "5432:5432"
-    volumes:
-      - sayit_pg:/var/lib/postgresql/data
-
-  sayit:
+    volumes: [sayit-db:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U sayit]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  api:
     build: .
-    depends_on:
-      - postgres
-    env_file:
-      - .env
+    env_file: .env
     environment:
-      DATABASE_URL: postgres://sayit:sayit@postgres:5432/sayit
-    ports:
-      - "8787:8787"
-
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://sayit:${POSTGRES_PASSWORD}@db:5432/sayit
+    ports: [127.0.0.1:8787:8787]
+    depends_on:
+      db:
+        condition: service_healthy
 volumes:
-  sayit_pg:
+  sayit-db:

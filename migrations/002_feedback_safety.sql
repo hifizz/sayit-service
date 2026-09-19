@@ -1,0 +1,17 @@
+ALTER TABLE dictations ADD COLUMN IF NOT EXISTS output_hash text NOT NULL DEFAULT '';
+ALTER TABLE dictations ADD COLUMN IF NOT EXISTS request_key text;
+ALTER TABLE dictations ADD COLUMN IF NOT EXISTS request_hash text;
+ALTER TABLE dictations ADD COLUMN IF NOT EXISTS transformations jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE dictations ADD COLUMN IF NOT EXISTS feedback jsonb;
+ALTER TABLE dictations ADD COLUMN IF NOT EXISTS meta jsonb NOT NULL DEFAULT '{}';
+CREATE UNIQUE INDEX IF NOT EXISTS dictations_request_key_idx ON dictations(user_id,request_key) WHERE request_key IS NOT NULL;
+ALTER TABLE vocabulary ADD COLUMN IF NOT EXISTS scope text NOT NULL DEFAULT '';
+ALTER TABLE vocabulary ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'candidate';
+UPDATE vocabulary SET status='active' WHERE source='manual';
+ALTER TABLE vocabulary DROP CONSTRAINT IF EXISTS vocabulary_user_id_canonical_key;
+CREATE UNIQUE INDEX IF NOT EXISTS vocabulary_scope_key ON vocabulary(user_id,canonical,scope);
+ALTER TABLE corrections ADD COLUMN IF NOT EXISTS scope text NOT NULL DEFAULT '';
+ALTER TABLE style_profiles ADD COLUMN IF NOT EXISTS scope text NOT NULL DEFAULT '';
+ALTER TABLE style_profiles DROP CONSTRAINT IF EXISTS style_profiles_pkey;
+ALTER TABLE style_profiles ADD PRIMARY KEY(user_id,scope);
+CREATE TABLE IF NOT EXISTS personalization_settings(user_id text PRIMARY KEY,enabled boolean NOT NULL DEFAULT true);

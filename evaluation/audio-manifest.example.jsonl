@@ -1,0 +1,1 @@
+{"id":"audio_001","split":"test","tags":["real_audio","zh"],"audio_path":"./sample-001.m4a","reference_text":"把这条替换成你真正想发送的文字。","reference_asr":"把这条替换成包含口癖的逐字人工转录。","context":{"type":"ai_prompt","app":"threadchat"},"vocabulary":[{"canonical":"ThreadChat","aliases":["thread chat"]}]}

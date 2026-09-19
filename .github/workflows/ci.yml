@@ -1,0 +1,72 @@
+name: CI
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sayit
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: sayit_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U sayit" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://sayit:ci-only-password@localhost:5432/sayit_test
+      TEST_DATABASE_URL: postgresql://sayit:ci-only-password@localhost:5432/sayit_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Apply and verify repeatable migrations
+        run: npm run db:migrate && npm run db:migrate
+      - name: Unit and real PostgreSQL tests
+        run: npm test -- --reporter=default --reporter=junit --outputFile.junit=reports/junit.xml
+      - name: Build
+        run: npm run build
+      - name: Mock evaluation harness (not quality parity)
+        run: npm run eval -- --mode mock --out reports/mock
+      - name: Compiled HTTP startup smoke
+        run: |
+          export SAYIT_SERVICE_TOKEN="$(openssl rand -hex 32)"
+          export SAYIT_MODE=mock HOST=127.0.0.1 PORT=8787
+          npm start > /tmp/sayit-start.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for n in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8787/ready; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8787/ready
+          curl -fsS http://127.0.0.1:8787/v1/dictations/text \
+            -H "Authorization: Bearer $SAYIT_SERVICE_TOKEN" \
+            -H 'X-Sayit-User-Id: ci-smoke' -H 'Content-Type: application/json' \
+            -d '{"raw_transcript":"不要删除旧数据。"}'
+      - name: Build Docker image
+        run: docker build -t sayit-ci .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sayit-ci-${{ github.sha }}
+          path: |
+            reports/
+            package-lock.json
+          retention-days: 7
