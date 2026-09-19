@@ -22,7 +22,7 @@ jobs:
           POSTGRES_DB: sayit_test
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U sayit" --health-interval 5s
+          --health-cmd "pg_isready -U sayit -d sayit_test" --health-interval 5s
           --health-timeout 5s --health-retries 10
     env:
       DATABASE_URL: postgresql://sayit:ci-only-password@localhost:5432/sayit_test
