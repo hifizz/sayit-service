@@ -32,9 +32,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install dependencies
-        run: |
-          if test -f package-lock.json; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
       - name: Audit production dependencies
         run: npm run audit:production
       - name: Typecheck
@@ -47,11 +47,13 @@ jobs:
         run: npm run build
       - name: Mock evaluation harness (not quality parity)
         run: npm run eval -- --mode mock --out reports/mock
+      - name: Blind-comparison harness smoke (identical fixtures, not Typeless results)
+        run: npm run eval:parity -- --left reports/mock/report.json --right reports/mock/report.json --out reports/parity-smoke
       - name: Compiled HTTP startup smoke
         run: |
           export SAYIT_SERVICE_TOKEN="$(openssl rand -hex 32)"
           export SAYIT_MODE=mock HOST=127.0.0.1 PORT=8787
-          npm start > /tmp/sayit-start.log 2>&1 &
+          node dist/index.js > /tmp/sayit-start.log 2>&1 &
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           for n in $(seq 1 30); do
@@ -65,6 +67,22 @@ jobs:
             -d '{"raw_transcript":"不要删除旧数据。"}'
       - name: Build Docker image
         run: docker build -t sayit-ci .
+      - name: Run production Docker image and verify HTTP
+        run: |
+          export SAYIT_SERVICE_TOKEN="$(openssl rand -hex 32)"
+          docker run --detach --name sayit-ci-runtime --network host \
+            -e DATABASE_URL -e SAYIT_SERVICE_TOKEN -e SAYIT_MODE=mock \
+            -e PORT=8788 sayit-ci
+          trap 'docker stop sayit-ci-runtime >/dev/null 2>&1 || true' EXIT
+          for n in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8788/ready; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8788/ready
+          curl -fsS http://127.0.0.1:8788/v1/dictations/text \
+            -H "Authorization: Bearer $SAYIT_SERVICE_TOKEN" \
+            -H 'X-Sayit-User-Id: ci-container' -H 'Content-Type: application/json' \
+            -d '{"raw_transcript":"可以考虑，但还没有决定。"}'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -73,37 +91,3 @@ jobs:
             reports/
             package-lock.json
           retention-days: 7
-  freeze-tested-lock:
-    # Bootstrap only: persist the exact lock produced by the successful verify
-    # job. Never write from PR code, fork events, or untrusted branch names.
-    if: github.event_name == 'push' && github.repository == 'hifizz/sayit-service' && github.ref == 'refs/heads/feat/typeless-parity-backend'
-    needs: verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    permissions:
-      contents: write
-      actions: read
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: sayit-ci-${{ github.sha }}
-          path: verified
-      - name: Persist verified dependency lock without overwriting newer work
-        env:
-          SOURCE_SHA: ${{ github.sha }}
-        run: |
-          if test -f package-lock.json; then exit 0; fi
-          git fetch origin feat/typeless-parity-backend
-          if test "$(git rev-parse FETCH_HEAD)" != "$SOURCE_SHA"; then
-            echo 'Branch advanced; leave it untouched.'
-            exit 0
-          fi
-          cp verified/package-lock.json package-lock.json
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package-lock.json
-          git commit -m 'build: freeze dependency lock verified by CI'
-          git push origin HEAD:refs/heads/feat/typeless-parity-backend

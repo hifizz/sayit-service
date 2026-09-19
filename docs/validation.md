@@ -1,11 +1,17 @@
 # 验证记录与交付边界
 
-## 已完成的一轮工程验证
+## 已完成的工程验证
 
-代码提交 `99a09c59a60f4497be9d2285db6e1dd0eb1e32a8` 的 GitHub Actions run：
+首轮完整通过的代码提交：`99a09c59a60f4497be9d2285db6e1dd0eb1e32a8`，JUnit 实测 92 项通过，0 失败，0 错误，0 跳过。
 https://github.com/hifizz/sayit-service/actions/runs/35472121510
 
-JUnit 实测：92 项测试通过，0 失败，0 错误，0 跳过。其中 API 17、feedback 14、policy/metrics 46、真实 PostgreSQL 4、provider/config 11。类型检查、迁移连续执行两次、生产构建、编译后 HTTP 启动、Docker 构建均成功。之后的补充边界测试以 PR 最新 CI 为准。
+补充边界检查后的提交：`7b36665add910243b9e01434c5d0d50dc98e9136`，新增过期幂等键、词条恢复、非法模型反馈和 provider 参数测试；完整测试、生产依赖安全检查、迁移、构建及 HTTP 启动再次通过。
+https://github.com/hifizz/sayit-service/actions/runs/35472352234
+
+依赖锁文件已由这次成功验证的 artifact 原样保存到仓库（提交 `d07aee272758caba375607ca2e6beb411e272574`）；后续 CI、Docker、live eval 都使用 `npm ci`。用于保存锁文件的一次性写权限 job 已移除，常规工作流只具有 contents:read。
+
+最新完整状态以 PR #1 Checks 与 Actions artifact 中的 JUnit 为准：
+https://github.com/hifizz/sayit-service/pull/1/checks
 
 32 条公开合成文本已经跑通 mock 评测管线，32/32 请求成功。**这仅是框架连通验证，不是语音识别或 Typeless 效果评分**。不把 mock 的逐字一致率、约束检查率或毫秒级耗时宣传为真实模型指标。
 
