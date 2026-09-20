@@ -1,0 +1,39 @@
+name: Manual live text evaluation
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: Number of synthetic text cases (real LLM charges; no real audio in this workflow)
+        default: '10'
+        required: true
+      model:
+        description: OpenAI-compatible cleanup model
+        default: grok-4.6
+        required: true
+permissions:
+  contents: read
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Run explicitly requested live evaluation
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ vars.LLM_BASE_URL || 'https://api.x.ai/v1' }}
+          LLM_MODEL: ${{ inputs.model }}
+          CASE_LIMIT: ${{ inputs.limit }}
+        run: npm run eval -- --mode live --limit "$CASE_LIMIT" --out reports/live
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sayit-live-${{ github.run_id }}
+          path: reports/live/
+          retention-days: 7

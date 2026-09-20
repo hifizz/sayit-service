@@ -1,0 +1,15 @@
+import 'dotenv/config';
+import { loadConfig } from './config.js';
+import { createStorage } from './storage/index.js';
+import { OpenAiCompatibleLlm,PassthroughLlm } from './providers/llm.js';
+import { UnconfiguredStt,XaiSttProvider } from './providers/stt.js';
+import { buildApp } from './app.js';
+const c=loadConfig();const live=c.SAYIT_MODE==='live';const storage=createStorage(c.DATABASE_URL,c.RETENTION_HOURS);
+const stt=live?new XaiSttProvider({apiKey:c.XAI_API_KEY!,baseUrl:c.XAI_BASE_URL,model:c.XAI_STT_MODEL}):new UnconfiguredStt();
+const llm=live?new OpenAiCompatibleLlm({apiKey:c.LLM_API_KEY||c.XAI_API_KEY!,baseUrl:c.LLM_BASE_URL,model:c.LLM_MODEL,jsonMode:c.LLM_JSON_MODE}):new PassthroughLlm();
+const app=buildApp({storage,stt,llm,serviceToken:c.SAYIT_SERVICE_TOKEN,semanticGuardEnabled:true,maxAudioBytes:c.MAX_AUDIO_BYTES,maxRequestsPerMinute:c.MAX_REQUESTS_PER_MINUTE,maxConcurrent:c.MAX_CONCURRENT,logger:true,metadata:{mode:c.SAYIT_MODE,asr_model:live?c.XAI_STT_MODEL:null,llm_model:live?c.LLM_MODEL:null}});
+await storage.ping();await storage.purgeExpired();
+const timer=setInterval(()=>{void storage.purgeExpired().catch(()=>app.log.error('Retention purge failed'));},3600000);timer.unref();
+app.addHook('onClose',async()=>{clearInterval(timer);});
+for(const s of ['SIGINT','SIGTERM'] as const)process.once(s,()=>{void app.close();});
+await app.listen({host:c.HOST,port:c.PORT});

@@ -1,0 +1,8 @@
+{
+  "name":"sayit-service","version":"0.1.0","private":true,"type":"module",
+  "description":"Personalized speech-to-writing API with conservative correction and feedback learning",
+  "engines":{"node":">=22.0.0"},
+  "scripts":{"setup":"node scripts/setup.mjs","dev":"tsx watch src/index.ts","build":"tsc -p tsconfig.build.json","start":"node dist/index.js","typecheck":"tsc -p tsconfig.json --noEmit","test":"vitest run","test:watch":"vitest","db:migrate":"tsx scripts/migrate.ts","eval":"tsx scripts/eval.ts","eval:parity":"tsx scripts/eval-parity.ts","purge":"tsx scripts/purge.ts","audit:production":"npm audit --omit=dev --audit-level=high"},
+  "dependencies":{"@fastify/multipart":"10.1.1","dotenv":"16.4.5","fastify":"5.12.5","pg":"8.23.0","zod":"3.24.1"},
+  "devDependencies":{"@types/node":"22.10.2","@types/pg":"8.11.10","tsx":"4.19.2","typescript":"5.7.2","vitest":"2.1.8"}
+}
