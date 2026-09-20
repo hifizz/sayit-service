@@ -54,7 +54,17 @@ SAYIT_MODE=live
 XAI_API_KEY=你的密钥
 ```
 
-默认 cleanup 也使用 xAI，因此一把有相应模型权限的 xAI Key 即可开始联调。可独立配置 `LLM_BASE_URL`、`LLM_MODEL`、`LLM_API_KEY`。默认模型名来自核实的公开文档，真实账户权限、延迟与输出质量仍需实际调用验证。
+ASR 使用 xAI；cleanup/rewrite 的当前 baseline 改为 `glm-5.3-flash`，通过 OpenAI-compatible 中转调用。仓库不会提交或猜测你的私有中转域名与 Key；在本机 `.env` 设置真实 `LLM_BASE_URL` 与 `LLM_API_KEY`：
+
+```dotenv
+SAYIT_MODE=live
+XAI_API_KEY=你的_xAI_Key
+LLM_BASE_URL=https://你的中转地址/v1
+LLM_MODEL=glm-5.3-flash
+LLM_API_KEY=你的中转_Key
+```
+
+如果 `glm-5.3-flash` 仍指向 xAI 地址，服务会在启动时明确报错，避免静默把模型发到错误 provider。真实账户权限、延迟与输出质量仍需实际调用验证。
 
 ```bash
 set -a; . ./.env; set +a
