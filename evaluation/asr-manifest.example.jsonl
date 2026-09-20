@@ -1,0 +1,2 @@
+{"id":"techmix_001","audio_path":"audio/techmix_001.m4a","reference_asr":"帮我把 ThreadChat 接到 E2B，然后看一下 Langfuse trace。","key_terms":["ThreadChat","E2B","Langfuse"],"term_set":["ThreadChat","E2B","Langfuse"],"tags":["zh_en","technical_terms"]}
+{"id":"techmix_002","audio_path":"audio/techmix_002.m4a","reference_asr":"把 GLM-5.3-Flash 换成 DeepSeek V4.1 Flash，不过先不要改默认模型。","key_terms":["GLM-5.3-Flash","DeepSeek V4.1 Flash"],"term_set":["GLM-5.3-Flash","DeepSeek V4.1 Flash"],"tags":["zh_en","model_names","negation"]}
