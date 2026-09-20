@@ -99,11 +99,19 @@ curl http://127.0.0.1:8787/v1/dictations \
 
 ## 测试与评测
 
+正式质量评测拆成两个独立阶段：**ASR 转文字**与 **Rewrite 改写修饰**，两者使用独立输入和 leaderboard，详见 [两阶段评测方案](docs/two-stage-evaluation.md)。
+
 ```bash
 npm run typecheck
 npm test
 npm run build
 npm run eval -- --mode mock --out reports/mock
+
+# Stage A: 只测音频 → 原始 transcript，不调用 LLM
+npm run eval:asr -- --provider xai --dataset evaluation/private/asr.jsonl --out reports/asr/xai
+
+# Stage B: 只测固定 transcript → 最终文字，不调用 ASR
+npm run eval:rewrite -- --model glm-5.3-flash --base-url https://你的中转/v1 --dataset evaluation/cases.jsonl --out reports/rewrite/glm-5.3-flash
 
 # 设置好 Key 后：真实模型处理合成文本测试集
 npm run eval -- --mode live --limit 32 --out reports/live-text
@@ -142,6 +150,7 @@ docker compose up --build
 - [架构与边界](docs/architecture.md)
 - [ThreadChat 接入](docs/threadchat-integration.md)
 - [评测协议](docs/evaluation.md)
+- [两阶段评测方案](docs/two-stage-evaluation.md)
 - [中英混杂评测数据集](docs/code-switching-datasets.md)
 - [部署、Key 与数据保留](docs/runbook.md)
 - [外部资料及验证边界](docs/sources.md)
