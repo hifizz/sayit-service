@@ -1,0 +1,1 @@
+{"id":"rewrite_001","raw_transcript":"嗯那个先把 thread chat 接到 E2B，哦不对，先不要接 E2B，先在本地跑。","reference_text":"先不要把 ThreadChat 接到 E2B，先在本地跑。","tags":["filler","self_correction","zh_en"],"vocabulary":[{"canonical":"ThreadChat","aliases":["thread chat"]},{"canonical":"E2B","aliases":[]}],"must_include":["ThreadChat","E2B","不要","本地"],"must_not_include":["嗯那个"]}
