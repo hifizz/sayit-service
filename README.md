@@ -142,6 +142,7 @@ docker compose up --build
 - [架构与边界](docs/architecture.md)
 - [ThreadChat 接入](docs/threadchat-integration.md)
 - [评测协议](docs/evaluation.md)
+- [中英混杂评测数据集](docs/code-switching-datasets.md)
 - [部署、Key 与数据保留](docs/runbook.md)
 - [外部资料及验证边界](docs/sources.md)
 
