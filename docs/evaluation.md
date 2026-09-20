@@ -8,7 +8,7 @@
 
 ## 数据集
 
-仓库 `evaluation/cases.jsonl` 是 32 条人工构造的公开测试文本，覆盖口癖、强调、重复、局部改口、否定、模态、数字/单位/标识符、中英术语、恶意口述指令和 ai_prompt。这不是用户实际录音，也不是宣称有代表性的大规模 benchmark。
+仓库 `evaluation/cases.jsonl` 是 32 条人工构造的公开测试文本，覆盖口癖、强调、重复、局部改口、否定、模态、数字/单位/标识符、中英术语、恶意口述指令和 ai_prompt。这不是用户实际录音，也不是宣称有代表性的大规模 benchmark。中英混杂的公开数据集选择、SayIt-TechMix 私有集设计和 MER/英文术语专项指标见 [中英混杂评测数据集](code-switching-datasets.md)。
 
 真实数据放 `evaluation/private/`（已忽略）。每条包含 id、audio_path、reference_asr、reference_text、标签、必要 context 和允许的词典。音频路径相对 manifest 目录解析。不得把测试音频、参考结果或私人转录发布到公开仓库。
 
