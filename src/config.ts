@@ -12,6 +12,7 @@ export function loadConfig(env:NodeJS.ProcessEnv=process.env){
   const config=schema.parse(env);
   if(/replace|change-me|example/i.test(config.SAYIT_SERVICE_TOKEN))throw new Error('Generate a random SAYIT_SERVICE_TOKEN; do not use the example token');
   if(config.NODE_ENV==='production'&&!config.DATABASE_URL)throw new Error('Production requires DATABASE_URL; memory storage is volatile');
-  if(config.SAYIT_MODE==='live'&&(!config.XAI_API_KEY||!(config.LLM_API_KEY||config.XAI_API_KEY)))throw new Error('Live mode requires XAI_API_KEY and an LLM key');\n  if(config.SAYIT_MODE==='live'&&config.LLM_MODEL==='glm-5.3-flash'&&/api\\.x\\.ai$/i.test(new URL(config.LLM_BASE_URL).hostname))throw new Error('glm-5.3-flash requires LLM_BASE_URL to point at your OpenAI-compatible relay, not xAI');
+  if(config.SAYIT_MODE==='live'&&(!config.XAI_API_KEY||!(config.LLM_API_KEY||config.XAI_API_KEY)))throw new Error('Live mode requires XAI_API_KEY and an LLM key');
+  if(config.SAYIT_MODE==='live'&&config.LLM_MODEL==='glm-5.3-flash'&&/api\\.x\\.ai$/i.test(new URL(config.LLM_BASE_URL).hostname))throw new Error('glm-5.3-flash requires LLM_BASE_URL to point at your OpenAI-compatible relay, not xAI');
   return config;
 }
