@@ -36,14 +36,14 @@ SayIt 只表达说话者原本想写的内容，不回答说话者提出的问�
 
 ## 快速开始
 
-需要 Node.js 22+。
+需要 Node.js 22+ 和 pnpm（`corepack enable`）。
 
 ```bash
 git clone https://github.com/hifizz/sayit-service.git
 cd sayit-service
-npm install
-npm run setup
-npm run dev
+pnpm install
+pnpm run setup
+pnpm run dev
 ```
 
 默认的 `mock` 模式不需要模型 Key。它用于验证带鉴权的文本链路，并且会刻意原样返回文字，不模拟智能整理或语音识别。
@@ -60,7 +60,7 @@ curl http://127.0.0.1:8787/v1/dictations/text \
   -d '{"raw_transcript":"先保留现有数据。","context":{"type":"ai_prompt","app":"threadchat"}}'
 ```
 
-`npm run setup` 只在 `.env` 不存在时创建私有配置。未设置 `DATABASE_URL` 时，开发环境使用重启即清空的内存存储。
+`pnpm run setup` 只在 `.env` 不存在时创建私有配置。未设置 `DATABASE_URL` 时，开发环境使用重启即清空的内存存储。
 
 ## 真实模型
 
@@ -152,10 +152,10 @@ SayIt 返回可编辑草稿，不会自动发送消息。
 ## 验证
 
 ```bash
-npm run typecheck
-npm test
-npm run build
-npm run eval -- --mode mock --out reports/mock
+pnpm run typecheck
+pnpm test
+pnpm run build
+pnpm run eval --mode mock --out reports/mock
 ```
 
 CI 还会使用隔离的 PostgreSQL 服务运行迁移、provider 合约测试、编译后 HTTP 冒烟测试和 Docker 构建。
@@ -167,9 +167,9 @@ Mock 评测只验证评测框架。真实模型质量需要私人音频、人工
 生产模式必须使用 PostgreSQL。
 
 ```bash
-npm run db:migrate
-npm run build
-npm start
+pnpm run db:migrate
+pnpm run build
+pnpm start
 ```
 
 本地部署也可以使用 Docker Compose：

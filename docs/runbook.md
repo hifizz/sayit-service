@@ -20,7 +20,7 @@ LLM 单次调用默认最多等待 90 秒；单个听写请求受 180 秒总预�
 
 ## 首次部署
 
-安装依赖，`npm run setup`，配置 Key 与 PostgreSQL，执行 `npm run db:migrate`，再 build/start。迁移自动记录 checksum；已经执行的迁移不得修改，后续新增文件。测试数据库与生产数据库必须隔离。
+安装依赖，`pnpm run setup`，配置 Key 与 PostgreSQL，执行 `pnpm run db:migrate`，再 build/start。迁移自动记录 checksum；已经执行的迁移不得修改，后续新增文件。测试数据库与生产数据库必须隔离。
 
 Docker Compose 在本机 127.0.0.1:8787 暴露 API，数据库不映射宿主机端口。设置随机十六进制 `POSTGRES_PASSWORD`，以避免未编码特殊字符破坏 DATABASE_URL。公网必须置于 HTTPS 网关后，配置请求/上传超时、认证、速率与流量监控；不要直接把无 TLS 的 8787 暴露公网。
 

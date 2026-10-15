@@ -36,14 +36,14 @@ SayIt represents what the speaker intended to write. It does not answer the spea
 
 ## Quick start
 
-Requirements: Node.js 22+.
+Requirements: Node.js 22+ and pnpm (`corepack enable`).
 
 ```bash
 git clone https://github.com/hifizz/sayit-service.git
 cd sayit-service
-npm install
-npm run setup
-npm run dev
+pnpm install
+pnpm run setup
+pnpm run dev
 ```
 
 The default `mock` mode needs no model key. It exercises the authenticated text pipeline and deliberately returns text without intelligent cleanup or audio transcription.
@@ -60,7 +60,7 @@ curl http://127.0.0.1:8787/v1/dictations/text \
   -d '{"raw_transcript":"Please keep the existing data for now.","context":{"type":"ai_prompt","app":"threadchat"}}'
 ```
 
-`npm run setup` creates a private `.env` only when one does not already exist. Development uses volatile in-memory storage unless `DATABASE_URL` is configured.
+`pnpm run setup` creates a private `.env` only when one does not already exist. Development uses volatile in-memory storage unless `DATABASE_URL` is configured.
 
 ## Live providers
 
@@ -152,10 +152,10 @@ Read [deployment, credentials, and data retention](docs/runbook.md) for the comp
 ## Validation
 
 ```bash
-npm run typecheck
-npm test
-npm run build
-npm run eval -- --mode mock --out reports/mock
+pnpm run typecheck
+pnpm test
+pnpm run build
+pnpm run eval --mode mock --out reports/mock
 ```
 
 CI also runs migrations against an isolated PostgreSQL service, provider contract tests, a compiled HTTP smoke test, and a Docker build.
@@ -167,9 +167,9 @@ Mock evaluation verifies the harness only. Real-model quality requires private a
 Production mode requires PostgreSQL.
 
 ```bash
-npm run db:migrate
-npm run build
-npm start
+pnpm run db:migrate
+pnpm run build
+pnpm start
 ```
 
 Docker Compose is available for local deployment:

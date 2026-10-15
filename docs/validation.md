@@ -8,7 +8,7 @@ https://github.com/hifizz/sayit-service/actions/runs/35472121510
 补充边界检查后的提交：`7b36665add910243b9e01434c5d0d50dc98e9136`，新增过期幂等键、词条恢复、非法模型反馈和 provider 参数测试；完整测试、生产依赖安全检查、迁移、构建及 HTTP 启动再次通过。
 https://github.com/hifizz/sayit-service/actions/runs/35472352234
 
-依赖锁文件已由这次成功验证的 artifact 原样保存到仓库（提交 `d07aee272758caba375607ca2e6beb411e272574`）；后续 CI、Docker、live eval 都使用 `npm ci`。用于保存锁文件的一次性写权限 job 已移除，常规工作流只具有 contents:read。
+依赖锁文件已由这次成功验证的 artifact 原样保存到仓库（提交 `d07aee272758caba375607ca2e6beb411e272574`，当时为 `package-lock.json`）。仓库已迁移到 pnpm，后续 CI、Docker、live eval 都使用 `pnpm install --frozen-lockfile` 与 `pnpm-lock.yaml`。用于保存锁文件的一次性写权限 job 已移除，常规工作流只具有 contents:read。
 
 最新完整状态以 PR #1 Checks 与 Actions artifact 中的 JUnit 为准：
 https://github.com/hifizz/sayit-service/pull/1/checks

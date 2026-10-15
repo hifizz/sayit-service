@@ -12,4 +12,4 @@ Feedback requires exact dictation-span attribution, output SHA256 and finalizati
 
 Keep synthetic tests, real audio evaluations and Typeless comparison distinct. A scripted/mocked response does not validate the intelligence of a real model. No claims of parity without same-audio blinded human evaluation. Report failed/fallback/unrated cases and dataset/model/prompt/commit fingerprints.
 
-Before completing changes: `npm run typecheck`, `npm test`, `npm run build`, `npm run eval -- --mode mock`. Run PostgreSQL tests against an isolated database, never production. Update specs and tests with any policy change. Do not commit `.env`, real recordings, private transcripts, reports with personal content, or credentials.
+Before completing changes: `pnpm run typecheck`, `pnpm test`, `pnpm run build`, `pnpm run eval --mode mock`. Run PostgreSQL tests against an isolated database, never production. Update specs and tests with any policy change. Do not commit `.env`, real recordings, private transcripts, reports with personal content, or credentials.

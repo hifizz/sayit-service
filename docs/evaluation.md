@@ -33,7 +33,7 @@
 
 导出格式：`{"rows":[{"id":"audio_001","input_sha256":"与SayIt同一输入的SHA256","output_text":"Typeless真实输出"}]}`。
 
-`npm run eval:parity -- --left ... --right ...` 验证唯一 ID 和输入 hash 完全匹配，生成 blind.json、单独的 answer-key.private.json 和 ballots 模板。reviewer 应听原始音频，只看 A/B，不看答案键；模板不是实际评分，必须用真实判断替换。
+`pnpm run eval:parity --left ... --right ...` 验证唯一 ID 和输入 hash 完全匹配，生成 blind.json、单独的 answer-key.private.json 和 ballots 模板。reviewer 应听原始音频，只看 A/B，不看答案键；模板不是实际评分，必须用真实判断替换。
 
 重点问“哪个更接近本来想发的意思、修改更少”，而不是“哪个文笔华丽”。每条可记 A/B/tie、两边是否存在语义错误，以及原因。用 `--votes` 输入人工 ballots 后才生成胜/负/平、非平局胜率和 Wilson 95% 区间；未评分数量必须披露。区间仅对应当前样本、单次判断的二项近似，不可当作产品总体保证。
 
