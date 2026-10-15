@@ -8,8 +8,6 @@ A server-side speech-to-writing API that turns dictated audio into editable text
 
 SayIt transcribes audio with xAI Grok Voice Transcribe 2.0, then applies conservative cleanup through a configurable OpenAI-compatible LLM. It supports personal terminology, exact-span feedback, and explicit fallback when a rewrite cannot be trusted.
 
-> **Status:** v0.1 backend with a local demo page. The engineering pipeline is tested, and live connectivity is verified through real LLM calls, but real-world accuracy and Typeless parity have not been established through same-audio blinded evaluation.
-
 > **License:** [MIT](LICENSE); see [License](#license).
 
 ## What it does

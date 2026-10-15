@@ -8,8 +8,6 @@
 
 SayIt 使用 xAI Grok Voice Transcribe 2.0 转录音频，再通过可配置的 OpenAI-compatible LLM 做保守整理。它支持个人术语、精确片段反馈，并在改写不可信时明确回退。
 
-> **当前状态：** v0.1 服务端与本地 Demo 页。工程链路已有测试，live 链路已通过真实 LLM 调用验证连通，但尚未通过同音频人工盲测证明真实场景准确率或 Typeless parity。
-
 > **许可证：** [MIT](LICENSE)，详见[许可证](#许可证)。
 
 ## 功能概览
