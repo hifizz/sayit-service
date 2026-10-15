@@ -10,7 +10,7 @@ SayIt transcribes audio with xAI Grok Voice Transcribe 2.0, then applies conserv
 
 > **Status:** v0.1 backend. The engineering pipeline is tested, but real-world accuracy and Typeless parity have not been established through same-audio blinded evaluation.
 
-> **License:** No license file is included; see [License](#license).
+> **License:** [MIT](LICENSE); see [License](#license).
 
 ## What it does
 
@@ -61,6 +61,18 @@ curl http://127.0.0.1:8787/v1/dictations/text \
 ```
 
 `pnpm run setup` creates a private `.env` only when one does not already exist. Development uses volatile in-memory storage unless `DATABASE_URL` is configured.
+
+### Local demo page (optional)
+
+A minimal web demo built with [ElevenLabs UI](https://ui.elevenlabs.io) components exercises the full text and audio dictation pipeline:
+
+```bash
+pnpm demo:install   # one-time: install demo dependencies
+pnpm run dev        # terminal 1: the service
+pnpm demo           # terminal 2: demo page at http://localhost:5173
+```
+
+Paste the `SAYIT_SERVICE_TOKEN` from your `.env` into the connection card; the token stays in browser memory only. The demo verifies pipeline connectivity (record/upload audio, submit raw transcripts, inspect `guard_status` and metadata); it is not a quality or Typeless-parity evaluation.
 
 ## Live providers
 
@@ -202,4 +214,4 @@ Put the service behind an HTTPS gateway in production. Configure database backup
 
 ## License
 
-This repository currently does not include a license file. Until one is added, no open-source license is granted.
+This project is open source under the [MIT License](LICENSE).

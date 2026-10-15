@@ -10,7 +10,7 @@ SayIt 使用 xAI Grok Voice Transcribe 2.0 转录音频，再通过可配置的 
 
 > **当前状态：** v0.1 服务端。工程链路已有测试，但尚未通过同音频人工盲测证明真实场景准确率或 Typeless parity。
 
-> **许可证：** 当前没有许可证文件，详见[许可证](#许可证)。
+> **许可证：** [MIT](LICENSE)，详见[许可证](#许可证)。
 
 ## 功能概览
 
@@ -61,6 +61,18 @@ curl http://127.0.0.1:8787/v1/dictations/text \
 ```
 
 `pnpm run setup` 只在 `.env` 不存在时创建私有配置。未设置 `DATABASE_URL` 时，开发环境使用重启即清空的内存存储。
+
+### 本地 Demo 页（可选）
+
+基于 [ElevenLabs UI](https://ui.elevenlabs.io) 组件的最小 Web Demo，可测试文本与音频听写全链路：
+
+```bash
+pnpm demo:install   # 首次：安装 demo 依赖
+pnpm run dev        # 终端 1：启动服务
+pnpm demo           # 终端 2：Demo 页 http://localhost:5173
+```
+
+在连接设置里粘贴 `.env` 中的 `SAYIT_SERVICE_TOKEN`；Token 仅保留在浏览器内存。Demo 用于验证链路连通（录音/上传音频、提交原始转写、查看 `guard_status` 与元数据），不构成质量或 Typeless parity 评测。
 
 ## 真实模型
 
@@ -202,4 +214,4 @@ docker compose up --build
 
 ## 许可证
 
-本仓库当前没有许可证文件。在添加许可证前，不授予开源许可证。
+本项目基于 [MIT 许可证](LICENSE) 开源。
