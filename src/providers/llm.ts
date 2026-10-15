@@ -9,7 +9,7 @@ export interface LlmOptions {
 export class OpenAiCompatibleLlm implements JsonLlm {
   constructor(private readonly options: LlmOptions) {}
   async generateJson<T>(input: JsonRequest): Promise<T> {
-    const timeout = AbortSignal.timeout(this.options.timeoutMs ?? 30000);
+    const timeout = AbortSignal.timeout(this.options.timeoutMs ?? 90000);
     const signal = input.signal ? AbortSignal.any([timeout, input.signal]) : timeout;
     const structured = this.options.jsonMode === 'json_schema';
     const host = new URL(this.options.baseUrl).hostname;

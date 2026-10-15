@@ -6,6 +6,10 @@
 
 `DATABASE_URL`：PostgreSQL。production 必须设置；development 未设置使用内存。`RETENTION_HOURS=168`：暂存文本保留时长。`MAX_AUDIO_BYTES=26214400`：上传大小上限，不等于音频计费时长限制。`MAX_REQUESTS_PER_MINUTE=60` 和 `MAX_CONCURRENT=16` 是进程内保护，不是分布式配额。
 
+LLM 单次调用默认最多等待 90 秒；单个听写请求受 180 秒总预算限制。慢速模型仍可能回退，应分别观察重写和语义检查的超时与回退率。对支持结构化输出的 LLM，优先使用 `LLM_JSON_MODE=json_schema` 以减少无效 JSON；上线前须验证具体 provider 支持该模式。
+
+`SEMANTIC_GUARD_ENABLED=false` 是临时关闭语义复查的显式开关。此时每次非静音听写只调用一次改写模型，返回 `meta.guard_status=disabled`；正文未经独立语义检查，不能按安全通过统计。默认值为 `true`，重新启用无需迁移。使用 DeepSeek 官方接口时，`LLM_BASE_URL=https://api.deepseek.com`、`LLM_MODEL=deepseek-flash`、`LLM_JSON_MODE=json_object`，并配置该接口有效的 `LLM_API_KEY`。
+
 不要把真实 Key 直接写进 curl 命令、shell history 或公开聊天。用 `.env`（权限 0600）或部署系统的 secret 配置。仓库忽略 `.env` 和私人音频目录；部署前也要检查 Git 状态，不能只靠忽略规则代替审查。
 
 ## GitHub Actions

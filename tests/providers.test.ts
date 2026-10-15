@@ -12,11 +12,14 @@ describe('xAI REST contract',()=>{
 describe('LLM transport',()=>{
   const request={system:'system',user:'{}',schemaName:'test',schema:{type:'object'}};
   it.each(['json_object','json_schema'] as const)('supports %s with runtime-domain validation',async(mode)=>{let body:any;const p=new OpenAiCompatibleLlm({apiKey:'x',baseUrl:'https://provider.test/v1',model:'model',jsonMode:mode,fetchImpl:(async(_u,init)=>{body=JSON.parse(init!.body as string);return Response.json({choices:[{finish_reason:'stop',message:{content:'{"ok":true}'}}]});}) as typeof fetch});expect(await p.generateJson(request)).toEqual({ok:true});expect(body.response_format.type).toBe(mode);});
+  it('uses the unprefixed DeepSeek model at the direct chat endpoint',async()=>{let url:unknown,body:any;const p=new OpenAiCompatibleLlm({apiKey:'test-key',baseUrl:'https://api.deepseek.com',model:'deepseek-flash',jsonMode:'json_object',fetchImpl:(async(u,init)=>{url=u;body=JSON.parse(init!.body as string);return Response.json({choices:[{finish_reason:'stop',message:{content:'{"ok":true}'}}]});}) as typeof fetch});await p.generateJson(request);expect(url).toBe('https://api.deepseek.com/chat/completions');expect(body.model).toBe('deepseek-flash');expect(body.response_format.type).toBe('json_object');expect(body.stream).toBeUndefined();});
   it('rejects truncated JSON completions',async()=>{const p=new OpenAiCompatibleLlm({apiKey:'x',baseUrl:'https://provider.test/v1',model:'x',fetchImpl:(async()=>Response.json({choices:[{finish_reason:'length',message:{content:'{}'}}]})) as typeof fetch});await expect(p.generateJson(request)).rejects.toThrow('invalid_provider_json');});
 });
 describe('deployment configuration',()=>{
   it('requires a non-placeholder service credential',()=>{expect(()=>loadConfig({SAYIT_SERVICE_TOKEN:'replace-with-example-token-000000000'})).toThrow();});
   it('does not allow volatile production data storage',()=>expect(()=>loadConfig({SAYIT_SERVICE_TOKEN:TOKEN,NODE_ENV:'production'})).toThrow('DATABASE_URL'));
   it('requires credentials for live mode',()=>expect(()=>loadConfig({SAYIT_SERVICE_TOKEN:TOKEN,SAYIT_MODE:'live'})).toThrow('XAI_API_KEY'));
+  it('never sends the xAI key to a different LLM origin by default',()=>expect(()=>loadConfig({SAYIT_SERVICE_TOKEN:TOKEN,SAYIT_MODE:'live',XAI_API_KEY:'xai-key',LLM_BASE_URL:'https://api.deepseek.com'})).toThrow('separate LLM_API_KEY'));
   it('starts in visibly mock mode without provider credentials',()=>expect(loadConfig({SAYIT_SERVICE_TOKEN:TOKEN}).SAYIT_MODE).toBe('mock'));
+  it('requires an explicit false string to disable semantic review',()=>{expect(loadConfig({SAYIT_SERVICE_TOKEN:TOKEN}).SEMANTIC_GUARD_ENABLED).toBe(true);expect(loadConfig({SAYIT_SERVICE_TOKEN:TOKEN,SEMANTIC_GUARD_ENABLED:'false'}).SEMANTIC_GUARD_ENABLED).toBe(false);expect(()=>loadConfig({SAYIT_SERVICE_TOKEN:TOKEN,SEMANTIC_GUARD_ENABLED:'no'})).toThrow();});
 });

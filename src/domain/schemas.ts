@@ -6,12 +6,12 @@ export const contextSchema = z.object({
 }).strict();
 export const rewriteOutput = z.object({
   final_text: z.string().max(24000), applied_terms: z.array(z.string().max(80)).max(100),
-  transformations: z.array(z.string().max(100)).max(30)
+  transformations: z.array(z.string().transform(value=>value.slice(0,100))).max(30)
 }).strict();
 export const guardOutput = z.object({
   safe: z.boolean(), answered_user: z.boolean(), added_facts: z.boolean(),
   dropped_essential_meaning: z.boolean(), modal_strengthened: z.boolean(),
-  negation_changed: z.boolean(), numbers_changed: z.boolean(), reason: z.string().max(1000)
+  negation_changed: z.boolean(), numbers_changed: z.boolean(), reason: z.string().transform(value=>value.slice(0,1000))
 }).strict();
 export const correctionTypes = ['TERM_CORRECTION','ASR_CORRECTION','SPELLING','GRAMMAR','PUNCTUATION','FORMAT','STYLE','SELF_CORRECTION_FIX','CONTENT_ADDITION','CONTENT_REMOVAL','MEANING_CHANGE','UNKNOWN'] as const;
 export const feedbackOutput = z.object({

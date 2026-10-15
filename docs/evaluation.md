@@ -21,6 +21,7 @@
 - `checked_constraint_pass_rate`：人工指定 must_include/must_not_include 的字面检查，仅覆盖明确列出的约束，不是完整语义准确率。
 - `asr_cer`：仅当另有逐字 ASR 人工参考时测量。不能拿润色后的目标文本评价 ASR。
 - `fallback_rate`：必须单独披露，不能靠退回原文获得看似安全的总分却隐瞒无润色。
+- `guard_status=disabled`：单独计数，属于未经自动语义检查的输出；不能计入语义安全通过数，也不能把未评分记为零风险。
 - observed zero-edit / post-edit cost：需要真实用户及可靠口述片段归因；未测为 null。未改动也不自动等于内容正确。
 - semantic violation / hallucination：需要人工听原音频判定具体错误，并记录分母。自动 guard 的自评分不能替代这些指标。
 - personalisation lift：需要按时间冻结的独立测试或相同样本开关个性化的配对对照。目前不生成虚构结果。

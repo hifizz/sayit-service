@@ -21,13 +21,13 @@ const serialize=(d:DictationRecord)=>({id:d.id,text:d.outputText,output_sha256:d
 export function buildApp(deps:AppDependencies){
   if(deps.serviceToken.length<32)throw new Error('Service token must be at least 32 characters');
   const maxAudioBytes=deps.maxAudioBytes??25*1024*1024;
-  const app=Fastify({bodyLimit:maxAudioBytes+65536,requestTimeout:130000,logger:deps.logger?{redact:['req.headers.authorization','req.headers.cookie','req.headers.x-sayit-user-id'],serializers:{req:(req:any)=>({method:req.method,url:String(req.url).split('?')[0]}),res:(res:any)=>({statusCode:res.statusCode})}}:false});
+  const app=Fastify({bodyLimit:maxAudioBytes+65536,requestTimeout:195000,logger:deps.logger?{redact:['req.headers.authorization','req.headers.cookie','req.headers.x-sayit-user-id'],serializers:{req:(req:any)=>({method:req.method,url:String(req.url).split('?')[0]}),res:(res:any)=>({statusCode:res.statusCode})}}:false});
   const users=new WeakMap<object,string>(),active=new WeakSet<object>();const rates=new Map<string,{start:number;count:number}>();let running=0;
   app.register(multipart,{limits:{fileSize:maxAudioBytes,files:1,fields:8,fieldSize:32768,parts:9}});
   const user=(request:object)=>users.get(request)!;
   const transact=<T>(request:object,work:(tx:Storage)=>Promise<T>)=>deps.storage.transaction(user(request),work);
   const dictations=(storage:Storage)=>new DictationService(deps.stt,deps.llm,storage,{semanticGuardEnabled:deps.semanticGuardEnabled??true,metadata:deps.metadata});
-  const signal=()=>AbortSignal.timeout(deps.requestBudgetMs??115000);
+  const signal=()=>AbortSignal.timeout(deps.requestBudgetMs??180000);
   const requestKey=(header:unknown)=>header===undefined?undefined:z.string().min(8).max(128).regex(/^[A-Za-z0-9._:-]+$/).parse(header);
   app.addHook('onRequest',async(request,reply)=>{
     if(request.url==='/health'||request.url==='/ready')return;

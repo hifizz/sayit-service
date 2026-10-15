@@ -48,6 +48,12 @@ THEN 保留最后一次明确意图，其余未被修订的约束必须保留。
 
 rewrite 和 guard 必须通过运行时 schema 校验。safe=true 不能覆盖其他任意危险标志。空输出、过度扩写、回答用户、新事实、丢含义、加强语气、否定变化、数字变化均需拒绝。初次检查拒绝时最多保守重写一次并重新检查；检查服务异常直接回退。最终回退保留原始 ASR 文本（只 trim），标注 fallback，不假装质量成功。
 
+模型返回的修改说明和审查理由是非语义元数据；说明过长时可截断保存，不应仅因此丢弃已通过完整语义检查的正文。最终文字、审查布尔标志及字段类型仍须严格校验；审查失败仍必须回退。
+
+临时显式设置 `SEMANTIC_GUARD_ENABLED=false` 时，仅执行一次 rewrite，不调用语义检查或修复。返回 `guard_status=disabled`，明确表示改写未通过语义审查；rewrite 的运行时 schema 校验与失败回退仍生效。此模式不作为语义安全或质量通过的证据。默认继续启用检查；启用时检查服务失败仍直接回退。
+
+LLM 改用不同 provider 域名时必须显式设置该 provider 的 `LLM_API_KEY`，不得把 xAI ASR Key 自动发送至其他域名。
+
 ## Requirement: 可追踪输出
 
 每次返回 dictation id、output_sha256、raw_transcript、最终 text、guard_status、policy_version、prompt_hash、模型元信息与处理时间。记录不包含模型 Key 或完整 provider 错误体。请求幂等键按用户隔离，相同键的不同输入返回 409。
